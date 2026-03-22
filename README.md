@@ -1,12 +1,12 @@
-# Adversarial Self-Interrogation Loops in Small LLMs (0.5B - 4B)
+# Adversarial Self-Interrogation Loops in Small LLMs (0.5B)
 
 ## Project Overview
 
-This repository contains the experimental framework, test scripts, and research findings from a deep, empirical dive into the reasoning capabilities of small Large Language Models (LLMs). The project specifically targets models in the sub-5B parameter class (such as Qwen 2.5 0.5B, Gemma 3 2B/4B, IBM Granite 4.0 Micro, and Nvidia Nemotron Nano 4B).
+This repository contains the experimental framework, test scripts, and research findings from a deep, empirical dive into the reasoning capabilities of small Large Language Models (LLMs). The project specifically targets the Qwen 2.5 0.5B model.
 
 The core objective was to determine if an adversarial "Reason-Strategy-Execution" loop could empower highly constrained models to solve complex, B.Tech-level engineering and mathematical problems (e.g., Runge-Kutta 4, Bisection Method, Newton-Raphson). 
 
-By pitting "Student" models against "Advisor/Auditor" models within a deterministic Python Sandbox (The Oracle), this project systematically deconstructed how small models simulate intelligence, mapped their definitive cognitive boundaries, and benchmarked them against massive reasoning models like DeepSeek-R1.
+By pitting a "Student" model (Qwen 0.5B) against an "Advisor/Auditor" model (Mistral 7B) within a deterministic Python Sandbox (The Oracle), this project systematically deconstructed how small models simulate intelligence and mapped their definitive cognitive boundaries.
 
 ---
 
@@ -29,27 +29,11 @@ Behavioral probing revealed that 0.5B models possess a "Symbolic Skeleton." They
 
 ---
 
-## 🏆 The Benchmark Revelation: Small-Model Elite vs. DeepSeek-R1
-
-As part of this project, over **20+ different models** were benchmarked against strict procedural math problems (like the Bisection Method). This yielded a highly counter-intuitive finding that challenges the current AI meta:
-
-**Highly optimized 2B-4B models consistently outperformed massive RL-trained reasoning models (like DeepSeek-R1) on strict procedural logic.**
-
-### Why DeepSeek-R1 Failed ("The Overthinking Trap")
-DeepSeek-R1 is trained via Reinforcement Learning (RL) to generate long, hidden "Chains of Thought." However, for strict procedural logic (like updating the interval `[a, b]` in the Bisection method), "thinking" is a liability. R1 gets stuck in its own reinforcement loops, overcomplicates the simple arithmetic, and drifts away from the strict algorithmic trace because human-like reasoning is terrible at tracking floating-point variables across multiple loops.
-
-### Why The "Small-Model Elite" Succeeded
-Models like **Gemma 3 (2B/4B)**, **IBM Granite 4.0 Micro**, and **Nvidia Nemotron Nano 4B** succeeded precisely because they *aren't* reasoning. 
-*   **Data Quality > Parameter Scale:** These specific models are trained on incredibly high-quality, synthetic data pipelines focused on enterprise code, deterministic logic, and perfect step-by-step execution traces.
-*   **Flawless Mimicry:** Because their training data is so algorithmically dense, their "Syntactic Mimicry" perfectly matches actual mathematical execution. They don't need to "reason" through the Bisection method; they simply output the exact, perfect algorithmic trace they were trained on.
-
----
-
 ## 🏗️ The Path Forward: The "Calculus Clerk" Architecture
 
 Because small models suffer from zero working memory, they cannot be forced to reason through text loops. However, they are exceptionally powerful when utilized correctly. The only viable architecture for solving engineering problems on hardware-constrained environments (like edge devices or standard laptops) is to treat the small LLM as a **"Calculus Clerk"**:
 
-1.  **Ban Manual Procedural Loops:** Never ask a sub-5B model to manually write a `for` or `while` loop for mathematical state management.
+1.  **Ban Manual Procedural Loops:** Never ask a 0.5B model to manually write a `for` or `while` loop for mathematical state management.
 2.  **Enforce Single-Turn API Translation:** Use the LLM *exclusively* as a fuzzy linguistic interface to translate the user's natural language request into a single call to a robust, pre-compiled library (e.g., mapping "find the root" to `scipy.optimize.bisect`).
 3.  **Rely on the CPU:** The LLM acts only as the translation router, leaving 100% of the state management, math, and logical execution to the deterministic Python CPU.
 
