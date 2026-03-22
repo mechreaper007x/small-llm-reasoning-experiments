@@ -10,7 +10,22 @@ By pitting a "Student" model (Qwen 0.5B) against an "Advisor/Auditor" model (Mis
 
 ---
 
-## 🔬 Key Discoveries: The Illusion of Reasoning
+## Philosophical Foundation
+
+This experiment was grounded in Karl Popper's Falsificationism —
+a hypothesis has no epistemic value unless it survives genuine attack.
+
+Current LLMs emit without attacking their own output.
+This loop was designed to force pre-emission falsification.
+
+The system itself became the subject of falsification —
+and the findings falsified several common assumptions
+about SLM reliability, RAG trustworthiness, and
+the value of episodic memory injection.
+
+---
+
+## Key Discoveries: The Illusion of Reasoning
 
 Our rigorous testing transitioned from pure text-based Program-Aided Language (PAL) reasoning to strict **Computational Scaffolding** (Python execution). This process revealed four definitive conclusions about how small LLMs operate:
 
@@ -29,7 +44,17 @@ Behavioral probing revealed that 0.5B models possess a "Symbolic Skeleton." They
 
 ---
 
-## 🏗️ The Path Forward: The "Calculus Clerk" Architecture
+## RAG Warning
+
+These findings have direct implications for production systems.
+SLMs used in RAG pipelines cannot reliably suppress their own
+prior distribution in favor of retrieved context.
+The model reads the document. The model ignores the document.
+Architect accordingly.
+
+---
+
+## The Path Forward: The "Calculus Clerk" Architecture
 
 Because small models suffer from zero working memory, they cannot be forced to reason through text loops. However, they are exceptionally powerful when utilized correctly. The only viable architecture for solving engineering problems on hardware-constrained environments (like edge devices or standard laptops) is to treat the small LLM as a **"Calculus Clerk"**:
 
@@ -39,7 +64,7 @@ Because small models suffer from zero working memory, they cannot be forced to r
 
 ---
 
-## 📂 Experimental Framework Structure
+## Experimental Framework Structure
 
 The repository tracks the evolution of the experimental architecture across several iterations:
 
@@ -50,7 +75,7 @@ The repository tracks the evolution of the experimental architecture across seve
 *   **`reason_v5.py` (Dynamic Schema Injection)**: The Advisor injected pure arithmetic blueprints, treating the 0.5B model as an ALU. (Failed, proving small models cannot process abstract variable substitution reliably).
 *   **`probe_attention.py` & `probe_knowledge.py`**: Behavioral probes that mapped the model's reaction to Semantic Noise and its internal schema corruption.
 
-## 📊 Reading the Results
+## Reading the Results
 
 *   `EXPERIMENT_LOGS.md`: Contains the historical logs of the early experiments, highlighting the transition from the "PAL Illusion" to the Sandbox reality.
 *   `RESEARCH_REPORT.md`: The formal, comprehensive write-up of the methodology, philosophical foundation (Falsificationism), and detailed case studies (Bisection, Newton-Raphson, RK4).
