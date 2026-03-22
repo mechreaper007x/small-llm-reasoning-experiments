@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reason — Self-Interrogation AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --sidebar-color: #121212;
+            --card-bg: #1a1a1a;
+            --text-main: #ececec;
+            --text-secondary: #9ea4b0;
+            --primary-accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border-color: #2d2d2d;
+            --user-bubble: #2f2f2f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Sentry', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            flex-shrink: 0;
+        }
+
+        .new-chat-btn {
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            transition: background 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .new-chat-btn:hover { background: #2a2a2a; }
+
+        .history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .history-item {
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-item:hover { background: #1a1a1a; color: white; }
+        .history-item i { font-size: 12px; }
+
+        /* --- MAIN CONTENT --- */
+        .main-chat {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .message {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            gap: 20px;
+            line-height: 1.6;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .user-avatar { background: var(--primary-accent); }
+        .ai-avatar { background: var(--success); }
+
+        .msg-content { flex-grow: 1; }
+
+        .user-msg { font-weight: 500; font-size: 1.1rem; }
+
+        /* --- THINKING TRACE --- */
+        .thinking-trace {
+            margin-top: 15px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .trace-header {
+            padding: 10px 15px;
+            background: #252525;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .trace-header:hover { background: #2d2d2d; }
+
+        .trace-body {
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            display: none;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .trace-body.active { display: block; }
+
+        .loop-block {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .loop-block:last-child { border-bottom: none; margin-bottom: 0; }
+
+        .loop-label {
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .step-entry {
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .step-name {
+            color: #8b949e;
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        pre {
+            background: #000;
+            color: #d1d5db;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            overflow-x: auto;
+            border: 1px solid #222;
+        }
+
+        .final-answer {
+            font-size: 1rem;
+            color: var(--text-main);
+            white-space: pre-wrap;
+        }
+
+        /* --- INPUT AREA --- */
+        .input-area {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(0deg, var(--bg-color) 0%, transparent 100%);
+        }
+
+        .input-wrapper {
+            max-width: 800px;
+            width: 100%;
+            background: var(--user-bubble);
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        textarea {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            min-height: 24px;
+            max-height: 200px;
+            padding: 4px 0;
+        }
+
+        .send-btn {
+            background: var(--primary-accent);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+        }
+
+        .send-btn:hover { opacity: 0.9; transform: scale(1.05); }
+        .send-btn:disabled { background: #444; cursor: not-allowed; }
+
+        /* --- STATUS BADGES --- */
+        .badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .badge-score { background: rgba(59, 130, 246, 0.2); color: var(--primary-accent); }
+        .badge-judge { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .badge-rejected { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <button class="new-chat-btn" id="new-chat-btn">
+            <i class="fa fa-plus"></i> New Experiment
+        </button>
+        <div class="history-list" id="history-list">
+            <!-- History items will appear here -->
+        </div>
+        <div style="font-size: 10px; color: #444; margin-top: 10px; text-align: center;">
+            MODEL: Qwen2.5-0.5B (Local)
+        </div>
+    </aside>
+
+    <main class="main-chat">
+        <header>
+            <div id="chat-title">Self-Interrogation Loop</div>
+            <i class="fa-solid fa-microchip" style="color: var(--primary-accent);"></i>
+        </header>
+
+        <div class="chat-container" id="chat-container">
+            <!-- Messages will appear here -->
+             <div style="text-align: center; color: var(--text-secondary); margin-top: 100px;" id="welcome-msg">
+                <i class="fa-solid fa-brain" style="font-size: 48px; margin-bottom: 20px; color: #333;"></i>
+                <h2>Recursive Reasoner</h2>
+                <p>Brutal falsification on tiny models (0.5B)</p>
+             </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="user-input" rows="1" placeholder="Type a challenge..."></textarea>
+                <button class="send-btn" id="send-btn">
+                    <i class="fa fa-arrow-up"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const input = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const container = document.getElementById('chat-container');
+        const historyList = document.getElementById('history-list');
+        const welcomeMsg = document.getElementById('welcome-msg');
+        const newChatBtn = document.getElementById('new-chat-btn');
+
+        let currentResponseDiv = null;
+        let currentTraceBody = null;
+        let currentLoopBlock = null;
+
+        // Auto-resize textarea
+        input.oninput = function() {
+            this.style.height = "auto";
+            this.style.height = (this.scrollHeight) + "px";
+        };
+
+        newChatBtn.onclick = () => {
+            container.innerHTML = '';
+            welcomeMsg.classList.remove('hidden');
+            input.value = '';
+            input.style.height = "auto";
+        };
+
+        sendBtn.onclick = () => {
+            const query = input.value.trim();
+            if (!query) return;
+
+            welcomeMsg.classList.add('hidden');
+            addMessage(query, 'user');
+            input.value = '';
+            input.style.height = "auto";
+            
+            const aiMsg = addMessage('', 'ai');
+            currentResponseDiv = aiMsg.querySelector('.final-answer');
+            currentTraceBody = aiMsg.querySelector('.trace-body');
+            
+            startInterrogation(query);
+        };
+
+        function addMessage(text, role) {
+            const msg = document.createElement('div');
+            msg.className = 'message';
+            const avatarClass = role === 'user' ? 'user-avatar' : 'ai-avatar';
+            const icon = role === 'user' ? 'fa-user' : 'fa-robot';
+            
+            msg.innerHTML = `
+                <div class="avatar ${avatarClass}"><i class="fa ${icon}"></i></div>
+                <div class="msg-content">
+                    <div class="${role === 'user' ? 'user-msg' : 'final-answer'}">${escape(text)}</div>
+                    ${role === 'ai' ? `
+                        <div class="thinking-trace">
+                            <div class="trace-header" onclick="toggleTrace(this)">
+                                <span><i class="fa-solid fa-terminal"></i> System Trace</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="trace-body"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            container.appendChild(msg);
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            return msg;
+        }
+
+        function toggleTrace(header) {
+            const body = header.nextElementSibling;
+            body.classList.toggle('active');
+            header.querySelector('.fa-chevron-down').style.transform = body.classList.contains('active') ? 'rotate(180deg)' : 'none';
+        }
+
+        function startInterrogation(query) {
+            sendBtn.disabled = true;
+            const es = new EventSource(`/stream?query=${encodeURIComponent(query)}`);
+
+            es.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                handleEvent(data);
+            };
+
+            es.onerror = () => {
+                es.close();
+                sendBtn.disabled = false;
+            };
+        }
+
+        function handleEvent(data) {
+            if (data.status === 'loop_start') {
+                currentLoopBlock = document.createElement('div');
+                currentLoopBlock.className = 'loop-block';
+                currentLoopBlock.innerHTML = `<div class="loop-label">Loop ${data.loop}</div>`;
+                currentTraceBody.appendChild(currentLoopBlock);
+            } else if (data.status === 'generating') {
+                addTraceStep(data.msg || 'Generating...');
+            } else if (data.status === 'generated') {
+                updateTraceStep(`<pre>${escape(data.answer)}</pre>`);
+            } else if (data.status === 'executing') {
+                addTraceStep('Sandbox Execution...');
+            } else if (data.status === 'executed') {
+                const color = data.result.success ? 'var(--success)' : 'var(--danger)';
+                updateTraceStep(`<pre style="color: ${color}">${escape(data.result.stdout || data.result.stderr)}</pre>`);
+            } else if (data.status === 'interrogating') {
+                addTraceStep('Brutal Interrogation...');
+            } else if (data.status === 'interrogated') {
+                const res = data.result;
+                updateTraceStep(`
+                    <div>Survival Score: <span class="badge badge-score">${res.survival_score}/10</span></div>
+                    <div style="margin-top:5px; font-size:11px; opacity:0.8">${escape(res.thinking || '')}</div>
+                `);
+            } else if (data.status === 'meta_judging') {
+                addTraceStep('Meta-Judge Analysis...');
+            } else if (data.status === 'meta_judged') {
+                const res = data.result;
+                const badgeClass = res.verdict === 'REJECTED' ? 'badge-rejected' : 'badge-judge';
+                updateTraceStep(`
+                    <div>Verdict: <span class="badge ${badgeClass}">${res.verdict}</span></div>
+                    <div style="font-size:11px; opacity:0.7">${escape(res.reason)}</div>
+                `);
+            } else if (data.status === 'complete') {
+                currentResponseDiv.textContent = data.final_answer;
+                sendBtn.disabled = false;
+                addHistoryItem(data.final_answer.substring(0, 30));
+            }
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+
+        function addTraceStep(name) {
+            const step = document.createElement('div');
+            step.className = 'step-entry';
+            step.innerHTML = `
+                <div class="step-name">${name}</div>
+                <div class="step-val"><div class="spinner"></div></div>
+            `;
+            currentLoopBlock.appendChild(step);
+        }
+
+        function updateTraceStep(html) {
+            const steps = currentLoopBlock.querySelectorAll('.step-val');
+            steps[steps.length - 1].innerHTML = html;
+        }
+
+        function addHistoryItem(text) {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<i class="fa fa-message"></i> ${escape(text)}...`;
+            historyList.prepend(item);
+        }
+
+        function escape(t) {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        // Enter key to send
+        input.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
